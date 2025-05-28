@@ -1,0 +1,81 @@
+version: '3'
+
+services:
+  origin:
+    build:
+      context: ./origin_server
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - LAT=39.8283  # Ashburn, VA
+      - LON=-77.6115
+    volumes:
+      - ./results:/app/results
+
+  edge1:
+    build:
+      context: ./edge_node
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8000"
+    environment:
+      - LAT=40.7128  # New York, NY
+      - LON=-74.0060
+      - CACHE_SIZE=50
+    depends_on:
+      - origin
+
+  edge2:
+    build:
+      context: ./edge_node
+      dockerfile: Dockerfile
+    ports:
+      - "8002:8000"
+    environment:
+      - LAT=41.8781  # Chicago, IL
+      - LON=-87.6298
+      - CACHE_SIZE=50
+    depends_on:
+      - origin
+
+  edge3:
+    build:
+      context: ./edge_node
+      dockerfile: Dockerfile
+    ports:
+      - "8003:8000"
+    environment:
+      - LAT=34.0522  # Los Angeles, CA
+      - LON=-118.2437
+      - CACHE_SIZE=50
+    depends_on:
+      - origin
+
+  edge4:
+    build:
+      context: ./edge_node
+      dockerfile: Dockerfile
+    ports:
+      - "8004:8000"
+    environment:
+      - LAT=29.7604  # Houston, TX
+      - LON=-95.3698
+      - CACHE_SIZE=50
+    depends_on:
+      - origin
+
+  user:
+    build:
+      context: ./user
+      dockerfile: Dockerfile
+    environment:
+      - ORIGIN_URL=http://origin:8000
+    volumes:
+      - ./results:/app/results
+    depends_on:
+      - origin
+      - edge1
+      - edge2
+      - edge3
+      - edge4 

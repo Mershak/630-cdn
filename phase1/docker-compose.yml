@@ -1,0 +1,19 @@
+version: '3'
+services:
+  origin:
+    build: ./origin_server
+    environment:
+      - LAT=39.8283    # Ashburn, VA (typical location for main datacenter)
+      - LON=-77.6115
+    ports:
+      - "8000:8000"
+
+  user_simulator:
+    build: ./user
+    environment:
+      - NUM_USERS=10     # Increased number of users
+      - REQUESTS_PER_USER=20  # Increased number of requests
+    depends_on:
+      - origin
+    volumes:
+      - ./results:/app/results 

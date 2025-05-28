@@ -1,0 +1,114 @@
+Phase 1: Base Implementation - Origin Server with Realistic Network Simulation
+==================================================================
+
+Primary Focus
+------------
+- Implementing realistic network delay simulation
+- Establishing baseline performance without CDN
+- Setting up infrastructure for future phases
+
+Architecture Overview
+-------------------
+- Single origin server located in Ashburn, VA (typical location for major data centers)
+- Multiple users distributed across major US cities
+- Direct client-to-origin communication with no CDN intermediaries
+
+Network Delay Simulation (Core Feature)
+------------------------------------
+1. Realistic Fiber Optic Propagation:
+   - Uses actual speed of light (299,792 km/s)
+   - Accounts for fiber optic refractive index (1.47)
+   - Calculates true propagation time through fiber
+
+2. Router Hop Simulation:
+   - Estimates 2 router hops per 1000km of distance
+   - Each router adds 1ms of delay
+   - Minimum 1 hop for any connection
+
+3. Additional Network Factors:
+   - Base latency: 1-2ms for processing and queuing
+   - Network jitter: ±0.5ms to simulate real-world variability
+   - Distance-based delay calculation using geodesic distance
+
+Content Distribution Model
+------------------------
+1. Content Popularity Zones:
+   - Trending (5 items): 40% of requests
+   - Popular (15 items): 30% of requests
+   - Regular (30 items): 20% of requests
+   - Rare (50 items): 10% of requests
+
+2. Temporal Locality:
+   - 30% chance to repeat one of the last 3 requested items
+   - Simulates users requesting same content around the same time
+   - Creates realistic patterns for future cache evaluation
+
+User Simulation
+-------------
+1. Geographic Distribution:
+   - 10 major US cities with varying distances from origin
+   - Each location has specific lat/lon coordinates
+   - Distance to origin affects request latency
+
+2. Request Pattern:
+   - 20 requests per user
+   - Requests are structured to support future popularity-based analysis
+   - Includes think time between requests (0.1-1.0s)
+
+Metrics Collection
+----------------
+1. Per-User Metrics:
+   - Total network time
+   - Average request time
+   - Success/failure counts
+   - Complete request sequence
+   - Individual request timings
+
+2. Global Metrics:
+   - Content popularity statistics
+   - Distance-based latency correlation
+   - Overall simulation performance
+
+Key Features for Future Comparison
+--------------------------------
+1. Baseline Performance:
+   - Direct origin server access times
+   - Impact of geographic distance on latency
+   - Natural content popularity distribution
+
+2. Future Evaluation Points:
+   - Will serve as comparison for CDN performance
+   - Popularity distribution will help evaluate cache effectiveness
+   - Temporal locality patterns will demonstrate caching benefits
+
+Technical Implementation
+----------------------
+1. Server (FastAPI):
+   - Simulated content database
+   - Physical distance-based delay calculation
+   - Detailed request metrics
+
+2. Client (Python Async):
+   - Concurrent user simulation
+   - Structured request generation
+   - Basic metrics collection
+
+3. Data Collection:
+   - CSV output with detailed metrics
+   - Per-request timing information
+   - Geographic performance data
+
+Groundwork for Future Phases
+--------------------------
+1. Request Pattern Structure:
+   - Content IDs organized to support future popularity zones
+   - Request sequence generation ready for temporal locality
+   - Infrastructure in place for future caching analysis
+
+2. Future Phases Preview:
+   - Phase 2: Will add basic CDN caching
+   - Phase 3: Will implement advanced caching strategies
+   - Phase 4: Will add load balancing and dynamic routing
+
+The focus in Phase 1 is on establishing accurate network delay simulation and 
+creating a solid foundation for measuring improvements in future phases. 

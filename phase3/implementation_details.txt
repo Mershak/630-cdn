@@ -1,0 +1,111 @@
+Phase 3: Advanced CDN with Adaptive Replacement Cache (ARC)
+====================================================
+
+Changes from Phase 2
+------------------
+1. Primary Change - ARC Implementation:
+   - Replaced FIFO cache with Adaptive Replacement Cache
+   - Maintains four internal lists:
+     * T1: Recently used items (recency)
+     * T2: Frequently used items (frequency)
+     * B1: Ghost entries for items evicted from T1
+     * B2: Ghost entries for items evicted from T2
+   - Adaptive behavior:
+     * Self-tunes between recency and frequency
+     * Adjusts based on workload patterns
+     * Resistant to scanning and thrashing
+
+2. Cache Operation:
+   - Size: 50 items (same as Phase 2)
+   - Adaptive partitioning between T1 and T2
+   - Ghost entries track eviction history
+   - Automatically balances between:
+     * One-time requests (handled by T1)
+     * Repeated requests (promoted to T2)
+     * Protection against both temporal and spatial locality
+
+3. Advantages over FIFO:
+   - Better hit rates for mixed workloads
+   - Self-tuning behavior
+   - Scan-resistant (doesn't flush cache on large scans)
+   - Combines benefits of LRU and LFU
+   - No manual parameter tuning needed
+
+Technical Implementation
+----------------------
+1. ARC Algorithm Details:
+   - Target size parameter 'p' adapts automatically
+   - T1 + T2 = Cache size (50 items)
+   - B1 + B2 = Cache size (ghost entries)
+   - Promotion/demotion based on hit patterns
+   - O(1) complexity for all operations
+
+2. Cache Operations:
+   a. Cache Hit in T1:
+      - Move item to T2 (frequency)
+      - Adjust position in T2
+   b. Cache Hit in T2:
+      - Update position in T2
+   c. Cache Miss but in B1:
+      - Increase T1's target size
+      - Add to T2 (showing frequency)
+   d. Cache Miss but in B2:
+      - Decrease T1's target size
+      - Add to T2
+   e. Complete Miss:
+      - Add to T1 (recency)
+
+3. Adaptation Mechanism:
+   - p value increases on B1 hits
+   - p value decreases on B2 hits
+   - Automatically finds optimal balance
+   - Responds to changing access patterns
+
+Expected Improvements
+-------------------
+1. Cache Performance:
+   - Higher hit rates than FIFO
+   - Better handling of mixed workloads
+   - Improved performance for repeated requests
+   - Protection against pathological access patterns
+
+2. Specific Benefits:
+   - Better handling of Chicago's 3-user load
+   - Improved performance for popular content
+   - Reduced origin server load
+   - More stable response times
+
+3. Metrics to Watch:
+   - Cache hit ratio (should improve)
+   - Response time stability
+   - Edge node efficiency
+   - Origin server load reduction
+
+Infrastructure
+-------------
+1. Edge Nodes (unchanged):
+   - New York, NY
+   - Chicago, IL
+   - Los Angeles, CA
+   - Houston, TX
+
+2. Network Simulation (unchanged):
+   - Realistic fiber delay calculation
+   - Router hop estimation
+   - Processing time: 0.01-0.1ms
+   - Separate user->edge and edge->origin delays
+
+3. User Distribution (unchanged):
+   - 9 fixed users
+   - 3 in Chicago (load testing)
+   - 2 each in NY, LA, and Houston
+   - Mix of distances from edge nodes
+
+This phase demonstrates advanced caching techniques in CDN architecture:
+- Sophisticated cache replacement
+- Workload-adaptive behavior
+- Protection against edge cases
+- Improved efficiency without configuration
+
+Future improvements (Phase 4) will focus on load balancing and 
+dynamic routing between CDN nodes. 

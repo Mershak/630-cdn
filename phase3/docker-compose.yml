@@ -1,0 +1,68 @@
+version: '3'
+services:
+  origin:
+    build: ./origin_server
+    environment:
+      - LAT=39.8283    # Ashburn, VA (typical location for main datacenter)
+      - LON=-77.6115
+    ports:
+      - "8000:8000"
+
+  edge1:
+    build: ./edge_node
+    environment:
+      - LAT=40.7128    # New York, NY
+      - LON=-74.0060
+      - CACHE_SIZE=50
+    ports:
+      - "8001:8000"
+    depends_on:
+      - origin
+
+  edge2:
+    build: ./edge_node
+    environment:
+      - LAT=41.8781    # Chicago, IL
+      - LON=-87.6298
+      - CACHE_SIZE=50
+    ports:
+      - "8002:8000"
+    depends_on:
+      - origin
+
+  edge3:
+    build: ./edge_node
+    environment:
+      - LAT=34.0522    # Los Angeles, CA
+      - LON=-118.2437
+      - CACHE_SIZE=50
+    ports:
+      - "8003:8000"
+    depends_on:
+      - origin
+
+  edge4:
+    build: ./edge_node
+    environment:
+      - LAT=29.7604    # Houston, TX
+      - LON=-95.3698
+      - CACHE_SIZE=50
+    ports:
+      - "8004:8000"
+    depends_on:
+      - origin
+
+  user_simulator:
+    build: ./user
+    environment:
+      - NUM_USERS=10
+      - REQUESTS_PER_USER=20
+      - ORIGIN_URL=http://origin:8000
+    depends_on:
+      - origin
+      - edge1
+      - edge2
+      - edge3
+      - edge4
+    volumes:
+      - ./results:/app/results 
