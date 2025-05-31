@@ -1,81 +1,62 @@
-# Phase 5: Load-Aware Edge Node Selection
+# Phase 4: CDN Overload Simulation
 
-This phase builds on Phase 4 by adding load-aware edge node selection. Instead of using HTTP redirects, edge nodes now recommend alternative nodes to users when they become overloaded.
+This phase simulates an overload scenario at the Chicago edge node to demonstrate how CDN performance degrades under heavy load.
 
-## Key Changes
+## Key Changes from Phase 3
 
-1. **Load-Based Node Recommendations**
-   - Edge nodes track their load and share it with other nodes
-   - When a node is overloaded (load > 70%), it recommends less loaded nodes to users
-   - Recommendations consider both load (30%) and distance (70%) when selecting alternative nodes
-   - Users can follow up to 2 recommendations before settling on a node
+1. **Edge Node Load Simulation**
+   - Added active request tracking
+   - Implemented load-based processing delays
+   - Thresholds: 5 requests before slowdown, max 10 concurrent requests
+   - Exponential delay increase up to 100ms at max load
 
-2. **Load Monitoring and Sharing**
-   - Edge nodes periodically share their load information (every 2 seconds)
-   - Load is normalized on a 0-1 scale:
-     - 0-0.25: Normal load (0-3 requests)
-     - 0.25-1.0: High load (4-8 requests)
-   - Nodes must have at least 30% less load to be recommended
+2. **Chicago Load Generation**
+   - Increased Chicago users from 3 to 6
+   - Each Chicago user makes 50 requests (vs 20 for others)
+   - 70% of requests are for large content (IDs 80-99)
+   - Shorter think times between requests (0.05-0.2s vs 0.1-1.0s)
 
-3. **User Behavior**
-   - Chicago users generate more load:
-     - 30 requests per user (vs 20 for others)
-     - 70% heavy content requests
-     - Shorter think times (50-200ms vs 100ms-1s)
-   - 6 Chicago users (doubled from Phase 4)
-   - Other locations unchanged (2 users each)
+3. **Content Size Variation**
+   - Content IDs 0-9: 5-10KB (popular content)
+   - Content IDs 10-29: 10-50KB (semi-popular)
+   - Content IDs 30-79: 1-100KB (regular)
+   - Content IDs 80-99: 100-500KB (large content)
 
-4. **Metrics and Monitoring**
-   - New metrics for load balancing:
-     - Number of recommendations received
-     - Load distribution across nodes
-     - Recommendation success rate
-   - Detailed logging of load states and recommendations
-
-## Components
-
-1. **Edge Node**
-   - Tracks active requests and load score
-   - Shares load information with other nodes
-   - Makes recommendations based on load and distance
-   - Still maintains FIFO cache and network delay simulation
-
-2. **User Simulator**
-   - Handles node recommendations gracefully
-   - Tracks recommendation statistics
-   - Implements different load patterns for Chicago vs other users
-
-3. **Origin Server**
-   - Maintains registry of edge nodes
-   - Provides initial node discovery
-   - Serves content with simulated size variations
-
-## Running the Simulation
-
-```bash
-docker-compose up --build
-```
-
-Results will be saved in the `results` directory with timestamp.
+4. **Enhanced Metrics**
+   - Added load delay tracking
+   - Current load monitoring
+   - Per-edge node statistics
+   - Content size impact on delays
 
 ## Expected Behavior
 
-1. Initially, users connect to their closest edge nodes
-2. As Chicago nodes become overloaded:
-   - They recommend alternative nodes to users
-   - Users follow recommendations to less loaded nodes
-3. Load gradually spreads across the network
-4. Users balance between network delay and load delay
+1. Chicago edge node will show:
+   - Higher average response times
+   - More load-based delays
+   - Lower cache hit rates
+   - Higher total network time
 
-## Results Analysis
+2. Other edge nodes will maintain:
+   - Normal response times
+   - Minimal load-based delays
+   - Better cache performance
+   - Consistent network times
 
-The simulation tracks:
-- Load distribution across nodes
-- Number and success of recommendations
-- Impact on response times and cache performance
-- Distance vs load tradeoffs
+## Running the Simulation
 
-Look for:
-- Effective load spreading from Chicago nodes
-- Reasonable distance penalties from recommendations
-- Overall system stability 
+1. Build and start the containers:
+   ```bash
+   docker-compose up --build
+   ```
+
+2. Results will be saved to:
+   - CSV file in `./results` directory
+   - Detailed console output with statistics
+
+## Metrics Explanation
+
+- `total_network_time`: Base network delay + content transfer time
+- `total_load_delay`: Additional delay from server load
+- `average_request_time`: Average total time per request
+- `cache_hit_ratio`: Percentage of requests served from cache
+- `current_load`: Number of concurrent requests at measurement time 

@@ -1,0 +1,13 @@
+user_id,city,distance_to_origin_km,distance_to_edge_km,edge_node_location,total_network_time,total_load_delay,average_request_time,successful_requests,failed_requests,cache_hits,cache_hit_ratio
+1,Chicago Downtown,874,0,"Chicago, IL",5.53,0,184,30,0,18,0.6
+7,Manhattan,322,0,"New York, NY",0.027,0,1.4,20,0,8,0.4
+11,Houston Downtown,1.97e+03,0,"Houston, TX",0.104,0,5.2,20,0,10,0.5
+9,LA Downtown,3.64e+03,0,"Los Angeles, CA",0.245,0,12.2,20,0,7,0.35
+5,Chicago East,874,1.8,"Chicago, IL",5.49,0,183,30,0,20,0.667
+8,Newark,309,14.3,"New York, NY",0.024,0,1.2,20,0,10,0.5
+4,Chicago South,873,16.8,"Chicago, IL",5.51,0,184,30,0,20,0.667
+2,Chicago North,883,19.2,"Chicago, IL",5.63,0,188,30,0,21,0.7
+6,Chicago Suburb,890,21.4,"Chicago, IL",5.5,0,183,30,0,17,0.567
+10,Santa Monica,3.67e+03,23.1,"Los Angeles, CA",0.191,0,9.6,20,0,10,0.5
+3,Chicago West,897,23.2,"Chicago, IL",6.07,0,202,30,0,21,0.7
+12,The Woodlands,1.94e+03,45.8,"Houston, TX",0.099,0,5,20,0,11,0.55
