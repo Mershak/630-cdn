@@ -104,9 +104,26 @@ class User:
             self.edge_node = data["edge_node"]
             self.distance_to_edge = data["distance_km"]
 
+    async def start_and_confirm_session(self):
+        async with httpx.AsyncClient() as client:
+            while True:
+                response = await client.post(f"{self.edge_node['url']}/start_session")
+                if response.status_code == 200:
+                    print("God ok from ", self.edge_node['url'])
+                    break
+                elif response.status_code == 302:
+                    self.edge_node['url'] = response.json()['redirect']
+                    print("user in ", self.location["city"] , "asked ", self.edge_node['url'] , "Redirected to " ,response.json()['redirect'])
+
+    async def end_session(self):
+        async with httpx.AsyncClient() as client:
+            await client.post(f"{self.edge_node['url']}/end_session")
+
     async def make_requests(self):
         # First discover the closest CDN edge node
         await self.discover_cdn()
+
+        await self.start_and_confirm_session()
         
         async with httpx.AsyncClient() as client:
             for i, content_id in enumerate(self.request_sequence):
@@ -154,6 +171,9 @@ class User:
                 # Chicago users have shorter think times to create more load
                 think_time = random.uniform(0.05, 0.2) if "Chicago" in self.location["city"] else random.uniform(0.1, 1.0)
                 await asyncio.sleep(think_time)
+            
+            print("Session ended")
+            await self.end_session()
     
     def get_summary(self):
         return {

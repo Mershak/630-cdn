@@ -1,0 +1,27 @@
+user_id,city,distance_to_origin_km,distance_to_edge_km,edge_node_location,total_network_time,total_load_delay,average_request_time,successful_requests,failed_requests,cache_hits,cache_hit_ratio
+1,Chicago Downtown,874,0,"Chicago, IL",4.89,0,163,30,0,16,0.533
+2,Chicago North,883,19.2,"Chicago, IL",5.32,0,177,30,0,23,0.767
+3,Chicago West,897,23.2,"Chicago, IL",5.57,0,186,30,0,19,0.633
+4,Chicago South,873,16.8,"Chicago, IL",6.05,0,202,30,0,16,0.533
+5,Chicago East,874,1.8,"Chicago, IL",5.72,0,191,30,0,21,0.7
+6,Chicago Suburb,890,21.4,"Chicago, IL",5.67,0,189,30,0,20,0.667
+7,Manhattan,322,0,"New York, NY",0.027,0,1.3,20,0,8,0.4
+8,Newark,309,14.3,"New York, NY",0.024,0,1.2,20,0,10,0.5
+9,LA Downtown,3.64E+03,0,"Los Angeles, CA",0.17,0,8.5,20,0,11,0.55
+10,Santa Monica,3.67E+03,23.1,"Los Angeles, CA",0.228,0,11.4,20,0,8,0.4
+11,Houston Downtown,1.97E+03,0,"Houston, TX",0.104,0,5.2,20,0,10,0.5
+12,The Woodlands,1.94E+03,45.8,"Houston, TX",0.119,0,6,20,0,9,0.45
+,,,,,,,,,,,
+,user_id,city,total_network_time,,,,,,,,
+,1,Chicago Downtown,4.89,,,,,,,,
+,2,Chicago North,5.32,,,,,,,,
+,3,Chicago West,5.57,,,,,,,,
+,4,Chicago South,6.05,,,,,,,,
+,5,Chicago East,5.72,,,,,,,,
+,6,Chicago Suburb,5.67,,,,,,,,
+,7,Manhattan,0.027,,,,,,,,
+,8,Newark,0.024,,,,,,,,
+,9,LA Downtown,0.17,,,,,,,,
+,10,Santa Monica,0.228,,,,,,,,
+,11,Houston Downtown,0.104,,,,,,,,
+,12,The Woodlands,0.119,,,,,,,,

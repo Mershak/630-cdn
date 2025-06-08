@@ -23,6 +23,8 @@ services:
       - LAT=40.7128  # New York, NY
       - LON=-74.0060
       - CACHE_SIZE=50
+      - PEERS=http://edge4:8000,http://edge2:8000,http://edge3:8000
+      - NODE_ID=edge1
     depends_on:
       - origin
 
@@ -36,6 +38,8 @@ services:
       - LAT=41.8781  # Chicago, IL
       - LON=-87.6298
       - CACHE_SIZE=50
+      - PEERS=http://edge1:8000,http://edge3:8000,http://edge4:8000
+      - NODE_ID=edge2
     depends_on:
       - origin
 
@@ -49,6 +53,8 @@ services:
       - LAT=34.0522  # Los Angeles, CA
       - LON=-118.2437
       - CACHE_SIZE=50
+      - PEERS=http://edge1:8000,http://edge2:8000,http://edge4:8000
+      - NODE_ID=edge3
     depends_on:
       - origin
 
@@ -62,6 +68,8 @@ services:
       - LAT=29.7604  # Houston, TX
       - LON=-95.3698
       - CACHE_SIZE=50
+      - PEERS=http://edge1:8000,http://edge2:8000,http://edge3:8000
+      - NODE_ID=edge4
     depends_on:
       - origin
 

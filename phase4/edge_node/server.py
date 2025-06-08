@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from geopy.distance import geodesic
 import httpx
 import time
@@ -6,12 +7,14 @@ import os
 import random
 import asyncio
 from collections import defaultdict
+import threading
 
 app = FastAPI()
 
 # Edge node's physical location
 NODE_LAT = float(os.getenv("LAT"))
 NODE_LON = float(os.getenv("LON"))
+NODE_ID = os.getenv("NODE_ID")
 CACHE_SIZE = int(os.getenv("CACHE_SIZE", "50"))
 
 # Network simulation parameters
@@ -25,11 +28,12 @@ ESTIMATED_HOPS_PER_1000KM = 2
 ORIGIN_URL = "http://origin:8000"
 
 # Load tracking with more aggressive thresholds
-active_requests = 0
-LOAD_THRESHOLD = 3  # Start slowing at 4 concurrent requests
-MAX_LOAD = 8       # Maximum concurrent requests
-request_history = defaultdict(int)  # Track requests per user
-processing_delay = 0.0001  # Back to original fast processing (0.1ms)
+active_connections = 0
+LOAD_THRESHOLD = 4
+max_connections = 8
+peer_loads = {}  # {"ip:port": load_percent}
+peer_nodes = os.getenv("PEERS", "").split(",")  # Format: ip:port
+
 
 class ARCache:
     """Adaptive Replacement Cache implementation."""
@@ -139,11 +143,11 @@ def calculate_network_delay(client_lat: float, client_lon: float) -> float:
 
 def calculate_load_delay() -> float:
     """Calculate additional delay based on current load with more aggressive scaling."""
-    if active_requests <= LOAD_THRESHOLD:
+    if active_connections <= LOAD_THRESHOLD:
         return 0  # No delay for normal load
     
     # More aggressive exponential delay increase after threshold
-    overload_factor = (active_requests - LOAD_THRESHOLD) / (MAX_LOAD - LOAD_THRESHOLD)
+    overload_factor = (active_connections - LOAD_THRESHOLD) / (max_connections - LOAD_THRESHOLD)
     if overload_factor > 1:
         overload_factor = 1
     
@@ -170,53 +174,84 @@ async def fetch_from_origin(content_id: str) -> dict:
         )
         return response.json()
 
+@app.post("/start_session")
+async def start_session(request: Request):
+    global active_connections
+    client_ip = request.client.host
+
+    my_load = calculate_load()
+    if my_load >= 100:
+        better_peer = None
+        
+        for peer, load in peer_loads.items():
+            if load < my_load - 20:
+                better_peer = peer
+                my_load = load
+
+        if better_peer:
+            return JSONResponse(content={"redirect": f"{better_peer}"}, status_code=302)
+
+    active_connections += 1
+    return {"status": "ok"}
+
+@app.post("/end_session")
+async def end_session():
+    global active_connections
+    if active_connections > 0:
+        active_connections -= 1
+    return {"status": "ended"}
+
+@app.post("/load_update")
+async def load_update(request: Request):
+    print("got load update")
+    data = await request.json()
+    peer_loads[data["ip"]] = data["load"]
+    return {"status": "received"}
+
+def calculate_load():
+    return (active_connections / LOAD_THRESHOLD) * 100
+
+
+
 @app.get("/content/{content_id}")
 async def get_content(content_id: str, request: Request, client_lat: float, client_lon: float):
-    global active_requests
-    
-    # Increment active requests counter
-    active_requests += 1
+
     client_ip = request.client.host
-    request_history[client_ip] += 1
+
+    request_start = time.time()
     
-    try:
-        request_start = time.time()
-        
-        # Calculate network delay for user->edge path
-        client_delay = calculate_network_delay(client_lat, client_lon)
-        
-        # Check cache first
-        content_data, cache_hit = cache.get(content_id)
-        
-        if not cache_hit:
-            # Fetch from origin
-            content_data = await fetch_from_origin(content_id)
-            # Add to cache
-            cache.put(content_id, content_data)
-            # Total theoretical delay includes origin server delay
-            total_delay = client_delay + content_data["metrics"]["network_delay"]
-        else:
-            # For cache hits, we only need the user->edge delay
-            total_delay = client_delay
-        
-        # Add load-based processing delay
-        load_delay = calculate_load_delay()
-        total_delay += load_delay
-        
-        request_end = time.time()
-        actual_processing_time = request_end - request_start
-        
-        return {
-            "content": content_data["content"],
-            "metrics": {
-                "network_delay": total_delay,
-                "processing_time": actual_processing_time,
-                "cache_hit": cache_hit,
-                "edge_node_location": {"lat": NODE_LAT, "lon": NODE_LON},
-                "current_load": active_requests,
-                "load_delay": load_delay
-            }
+    # Calculate network delay for user->edge path
+    client_delay = calculate_network_delay(client_lat, client_lon)
+    
+    # Check cache first
+    content_data, cache_hit = cache.get(content_id)
+    
+    if not cache_hit:
+        # Fetch from origin
+        content_data = await fetch_from_origin(content_id)
+        # Add to cache
+        cache.put(content_id, content_data)
+        # Total theoretical delay includes origin server delay
+        total_delay = client_delay + content_data["metrics"]["network_delay"]
+    else:
+        # For cache hits, we only need the user->edge delay
+        total_delay = client_delay
+    
+    # # Add load-based processing delay
+    load_delay = calculate_load_delay()
+    total_delay += load_delay
+    
+    request_end = time.time()
+    actual_processing_time = request_end - request_start
+    
+    return {
+        "content": content_data["content"],
+        "metrics": {
+            "network_delay": total_delay,
+            "processing_time": actual_processing_time,
+            "cache_hit": cache_hit,
+            "edge_node_location": {"lat": NODE_LAT, "lon": NODE_LON},
+            "current_load": calculate_load(),
+            "load_delay": 0
         }
-    finally:
-        # Decrement active requests counter
-        active_requests -= 1 
+    }

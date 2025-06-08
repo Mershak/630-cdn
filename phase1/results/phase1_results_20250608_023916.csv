@@ -1,0 +1,10 @@
+user_id,city,distance_to_origin_km,total_network_time,average_request_time,successful_requests,failed_requests
+5,Newark,309,0.283,14.1,20,0
+4,Manhattan,322,0.232,11.6,20,0
+1,Chicago Downtown,874,0.385,19.3,20,0
+2,Chicago North,883,0.329,16.4,20,0
+3,Chicago West,897,0.267,13.4,20,0
+9,The Woodlands,1.94e+03,0.464,23.2,20,0
+8,Houston Downtown,1.97e+03,0.489,24.5,20,0
+6,LA Downtown,3.64e+03,0.703,35.2,20,0
+7,Santa Monica,3.67e+03,0.693,34.7,20,0
