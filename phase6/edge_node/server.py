@@ -8,6 +8,7 @@ import random
 import asyncio
 from collections import defaultdict
 import threading
+from collections import Counter
 
 app = FastAPI()
 
@@ -33,6 +34,10 @@ LOAD_THRESHOLD = 4
 max_connections = 8
 peer_loads = {}  # {"ip:port": load_percent}
 peer_nodes = os.getenv("PEERS", "").split(",")  # Format: ip:port
+
+peer_caches = defaultdict(set)  # {peer_ip: set(content_ids)}
+local_access_counter = Counter()
+PREFETCH_THRESHOLD = 2  # Number of peers needing the content before we prefetch
 
 
 class ARCache:
@@ -231,10 +236,51 @@ def broadcast_load():
 
     threading.Thread(target=lambda: asyncio.run(repeat()), daemon=True).start()
 
+def broadcast_cache():
+    async def _send():
+        content_ids = list(cache.T1.keys()) + list(cache.T2.keys())
+        async with httpx.AsyncClient() as client:
+            for peer in peer_nodes:
+                try:
+                    await client.post(f"{peer}/cache_update", json={
+                        "ip": f"http://{NODE_ID}:8000",
+                        "content_ids": content_ids
+                    })
+                except Exception:
+                    continue
+
+    async def repeat():
+        while True:
+            await _send()
+            await asyncio.sleep(5)
+
+    threading.Thread(target=lambda: asyncio.run(repeat()), daemon=True).start()
+
+@app.post("/cache_update")
+async def cache_update(request: Request):
+    data = await request.json()
+    peer_ip = data["ip"]
+    peer_caches[peer_ip] = set(data["content_ids"])
+
+
+    # Check if content is popular among peers and prefetch if not already in cache
+    all_peer_counts = Counter()
+    for contents in peer_caches.values():
+        for cid in contents:
+            all_peer_counts[cid] += 1
+
+    for cid, count in all_peer_counts.items():
+        if count >= PREFETCH_THRESHOLD and cid not in cache.T1 and cid not in cache.T2:
+            content = await fetch_from_origin(cid)
+            cache.put(cid, content)
+
+    return {"status": "received"}
+
 @app.on_event("startup")
 async def on_startup():
     print(peer_nodes)
     broadcast_load()
+    broadcast_cache()
 
 
 @app.get("/content/{content_id}")
@@ -250,6 +296,8 @@ async def get_content(content_id: str, request: Request, client_lat: float, clie
     
     # Check cache first
     content_data, cache_hit = cache.get(content_id)
+    # Track popularity of content accessed
+    local_access_counter[content_id] += 1
     
     if not cache_hit:
         # Fetch from origin
@@ -258,6 +306,7 @@ async def get_content(content_id: str, request: Request, client_lat: float, clie
         cache.put(content_id, content_data)
         # Total theoretical delay includes origin server delay
         total_delay = client_delay + content_data["metrics"]["network_delay"]
+
     else:
         # For cache hits, we only need the user->edge delay
         total_delay = client_delay
